@@ -10,8 +10,9 @@ module.exports = function (grunt) {
         "build": "build",
         "dist_www": "../gh-pages",
         "dist_bower": "../bower-repo",
+        "www_server": "localhost",
         "www_port": "9768",
-        "www_server": "localhost"
+        "e2e_port": "9769"
     };
 
     grunt.initConfig({
@@ -21,20 +22,13 @@ module.exports = function (grunt) {
                 options: { install: true, copy: false }
             }
         },
-        watch: {
-            'watch-www': {
-                files: [
-                    '**/*.js'
-                ],
-                tasks: [
-                    'copy:watch-www'
-                ],
+        shell: {
+            'webdriver-manager-update': {
+                command: "node_modules/protractor/bin/webdriver-manager update",
                 options: {
-                    cwd: 'src/',
-                    interrupt: true,
-                    spawn: false
-                },
-            },
+                    async: false
+                }
+            }
         },
         copy: {
             "watch-www": {
@@ -151,13 +145,20 @@ module.exports = function (grunt) {
         connect: {
             // URL should be: http://localhost:9768/www/ to simulate github pages
             options : {
-                hostname: '<%= cvars.www_server %>',
-                port: '<%= cvars.www_port %>',
-                base: '.'
+                hostname: '<%= cvars.www_server %>'
             },
             "serve-www": {
                 options : {
+                    port: '<%= cvars.www_port %>',
+                    base: '.',
                     keepalive: true
+                }
+            },
+            "e2e-www": {
+                options : {
+                    port: '<%= cvars.e2e_port %>',
+                    base: './www',
+                    keepalive: false
                 }
             }
         },
@@ -186,6 +187,29 @@ module.exports = function (grunt) {
             },
             "build-travis": {
                 configFile: '<%= cvars.build %>/test/conf/karma.unit.min.js'
+            }
+        },
+        protractor: {
+            options: {
+                configFile: "test/conf/protractor.e2e.js"
+            },
+            "e2e-www": {
+                options: {
+                    keepAlive: true,
+                    args: {
+                        browser: "chrome",
+                        baseUrl: "http://<%= cvars.www_server %>:<%= cvars.e2e_port %>"
+                    }
+                }
+            },
+            "build-travis": {
+                options: {
+                    keepAlive: false,
+                    args: {
+                        browser: "phantomjs",
+                        baseUrl: "http://<%= cvars.www_server %>:<%= cvars.e2e_port %>"
+                    }
+                }
             }
         },
         template: {
@@ -276,7 +300,10 @@ module.exports = function (grunt) {
 
 
     /* BASIC TASKS */
-    grunt.registerTask('setup', ['bower:setup']);
+    grunt.registerTask('setup', [
+        'bower:setup',
+        'shell:webdriver-manager-update'
+    ]);
     grunt.registerTask('genTestTemplates', [
         'template:main-js','template:karma-js',
         'template:main-min-js','template:karma-min-js'
@@ -294,11 +321,20 @@ module.exports = function (grunt) {
     race condition was redering subsequent test with both ngload and
     no-ngload version unpredictable.
     */
-    grunt.registerTask('test', [
-        'setup',
+    grunt.registerTask('test-base', [
+        'setup'
+    ]);
+    grunt.registerTask('test-unit', [
+        'test-base',
         'genTestTemplates',
         'karma:unit',
         'karma:unit-no-ngload'
+    ]);
+    grunt.registerTask('test-e2e', [
+        'test-base',
+        'setup-www',
+        'connect:e2e-www',
+        'protractor:e2e-www'
     ]);
 
 
@@ -314,7 +350,10 @@ module.exports = function (grunt) {
         'setup',
         'genTestTemplates',
         'uglify:build',
-        'karma:build-travis'
+        'karma:build-travis',
+        'setup-www',
+        'connect:e2e-www',
+        'protractor:build-travis'
     ]);
 
     /* Setup/Development watcher */

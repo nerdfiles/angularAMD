@@ -251,8 +251,8 @@ define(function () {
         if (typeof enable_ngload === 'undefined') {
             enable_ngload = true;
         }
-        elem = elem || document;
-
+        elem = elem || document.documentElement;
+        
         // Cache provider needed
         app.config(
             ['$controllerProvider', '$compileProvider', '$filterProvider', '$animateProvider', '$provide', function (controllerProvider, compileProvider, filterProvider, animateProvider, provide) {

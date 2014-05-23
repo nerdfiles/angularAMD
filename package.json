@@ -29,12 +29,13 @@
         "grunt-contrib-requirejs": "~0.4.0",
         "grunt-contrib-connect": "~0.3.0",
         "grunt-templater": "~0.0.4",
+        "grunt-shell-spawn": "~0.3.0",
         "grunt-open": "~0.2.2",
         "grunt-usemin": "~0.1.11",
         "load-grunt-tasks": "~0.1.0",
         "karma": "~0.10.2",
-        "karma-ng-scenario": "~0.1.0",
-        "grunt-contrib-watch": "~0.6.0"
+        "protractor": "~0.21.0",
+        "grunt-protractor-runner": "~0.2.4"
     },
     "scripts": {
         "test": "grunt build-travis"
